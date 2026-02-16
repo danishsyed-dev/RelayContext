@@ -158,32 +158,30 @@ export async function saveCommand(
         },
     ]);
 
+    // Helper: parse comma-separated input, strip leading bullets (- • *)
+    const cleanListInput = (raw: string): string[] =>
+        raw
+            .split(",")
+            .map((s: string) => s.trim().replace(/^[-•*]\s*/, ""))
+            .filter(Boolean);
+
     // Merge approaches: carry forward previous + add new
     const prevApproaches = !isManual && prevEntry ? prevEntry.approaches : [];
     const newApproaches = answers.newApproaches
-        ? answers.newApproaches
-            .split(",")
-            .map((s: string) => s.trim())
-            .filter(Boolean)
+        ? cleanListInput(answers.newApproaches)
         : [];
     const allApproaches = [...new Set([...prevApproaches, ...newApproaches])];
 
     // Merge decisions: carry forward previous + add new
     const prevDecisions = !isManual && prevEntry ? prevEntry.decisions : [];
     const newDecisions = answers.newDecisions
-        ? answers.newDecisions
-            .split(",")
-            .map((s: string) => s.trim())
-            .filter(Boolean)
+        ? cleanListInput(answers.newDecisions)
         : [];
     const allDecisions = [...new Set([...prevDecisions, ...newDecisions])];
 
     // Parse next steps
     const nextSteps = answers.nextSteps
-        ? answers.nextSteps
-            .split(",")
-            .map((s: string) => s.trim())
-            .filter(Boolean)
+        ? cleanListInput(answers.nextSteps)
         : [];
 
     const entry: ContextEntry = {

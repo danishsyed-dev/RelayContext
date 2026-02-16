@@ -1,3 +1,4 @@
+// @ts-ignore - tsup resolves its own config at runtime
 import { defineConfig } from "tsup";
 
 export default defineConfig({

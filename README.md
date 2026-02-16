@@ -194,7 +194,7 @@ your-project/
 ## Contributing
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/RelayContext.git
+git clone https://github.com/danishsyed-dev/RelayContext.git
 cd RelayContext
 npm install
 npm run build
@@ -205,4 +205,4 @@ npm link    # makes 'relayctx' available globally
 
 ## License
 
-MIT © [Syed Danish Ali](https://github.com/YOUR_USERNAME)
+MIT © [Syed Danish Ali](https://github.com/danishsyed-dev)

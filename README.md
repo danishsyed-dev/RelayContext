@@ -2,13 +2,17 @@
 
 # 🔄 RelayContext
 
-**Git tracks code. RelayContext tracks thinking.**
+**Like a relay race — pass the baton, not the whole playbook.**
 
 Persist and restore structured AI coding context across sessions, IDEs, devices, and team members.
 
+[![npm version](https://img.shields.io/npm/v/relayctx?color=cb3837&logo=npm)](https://www.npmjs.com/package/relayctx)
+[![npm downloads](https://img.shields.io/npm/dm/relayctx?color=cb3837&logo=npm)](https://www.npmjs.com/package/relayctx)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+**Git tracks code. RelayContext tracks thinking.**
 
 </div>
 

@@ -6,6 +6,8 @@ import { logCommand } from "./commands/log.js";
 import { diffCommand } from "./commands/diff.js";
 import { handoffCommand } from "./commands/handoff.js";
 import { shareCommand } from "./commands/share.js";
+import { setQuietMode, printCustomHelp, printCustomVersion } from "./utils/ui.js";
+import chalk from "chalk";
 
 const program = new Command();
 
@@ -14,7 +16,33 @@ program
     .description(
         "Persist and restore structured AI coding context across sessions, IDEs, devices, and team members."
     )
-    .version("1.0.0");
+    .version("1.0.0", "-v, --version")
+    .option("-q, --quiet", "Suppress visual chrome (banners, boxes, spinners)")
+    .helpOption("-h, --help", "Show help")
+    .addHelpCommand(false);
+
+// Apply quiet mode before any command runs
+program.hook("preAction", (thisCommand) => {
+    const opts = thisCommand.opts();
+    if (opts.quiet) {
+        setQuietMode(true);
+    }
+});
+
+// Override default help
+program.configureHelp({
+    formatHelp: () => "",
+});
+
+program.on("option:help", () => {
+    printCustomHelp();
+    process.exit(0);
+});
+
+program.on("option:version", () => {
+    printCustomVersion();
+    process.exit(0);
+});
 
 // ─── init ───
 program
@@ -81,5 +109,36 @@ program
     .action(async () => {
         await shareCommand();
     });
+
+// ─── Unknown command handler ───
+program.on("command:*", (operands: string[]) => {
+    const availableCommands = program.commands.map((cmd) => cmd.name());
+    const unknown = operands[0];
+
+    // Simple "did you mean?" using Levenshtein-like check
+    const suggestions = availableCommands.filter((cmd) => {
+        // Check if first 2 chars match or edit distance is small
+        if (cmd.startsWith(unknown.slice(0, 2))) return true;
+        if (unknown.startsWith(cmd.slice(0, 2))) return true;
+        return false;
+    });
+
+    console.log();
+    console.log(chalk.red(`  ✖ Unknown command: ${chalk.bold(unknown)}`));
+    if (suggestions.length > 0) {
+        console.log(
+            chalk.dim(`  Did you mean? ${suggestions.map((s) => chalk.cyan(s)).join(", ")}`)
+        );
+    }
+    console.log(chalk.dim(`  Run ${chalk.white("relayctx --help")} to see all commands.`));
+    console.log();
+    process.exit(1);
+});
+
+// Show help when no command is provided
+if (process.argv.length <= 2) {
+    printCustomHelp();
+    process.exit(0);
+}
 
 program.parse();

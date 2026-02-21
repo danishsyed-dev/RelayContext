@@ -15,25 +15,43 @@ import {
     sanitizeBranchName,
     type ContextEntry,
 } from "../utils/storage.js";
+import {
+    printBanner,
+    printSuccess,
+    printSection,
+    printDim,
+    printEntryPreview,
+    spin,
+    validateGitRepo,
+    validateInitialized,
+} from "../utils/ui.js";
 
 export async function saveCommand(
     messageOrOpts?: string | { manual?: boolean }
 ): Promise<void> {
+    printBanner();
+
     // Validate environment
-    if (!(await isGitRepo())) {
-        console.log(chalk.red("✖ Not a Git repository."));
-        process.exit(1);
-    }
-    if (!(await isInitialized())) {
-        console.log(
-            chalk.red("✖ RelayContext not initialized. Run `relayctx init` first.")
-        );
+    const repoSpinner = spin("Checking Git repository...");
+    const isRepo = await isGitRepo();
+    if (!isRepo) {
+        repoSpinner.fail(chalk.red("Not a Git repository"));
         process.exit(1);
     }
 
+    const initialized = await isInitialized();
+    if (!initialized) {
+        repoSpinner.fail(chalk.red("RelayContext not initialized"));
+        printDim('Run `relayctx init` to set up this project.');
+        process.exit(1);
+    }
+    repoSpinner.succeed("Repository verified");
+
+    const branchSpinner = spin("Reading branch context...");
     const branch = await getCurrentBranch();
     const commit = await getCurrentCommit();
     const entryId = generateEntryId();
+    branchSpinner.succeed(`Branch: ${chalk.cyan(branch)}  Commit: ${chalk.dim(commit)}`);
 
     // ─── Quick Save Mode ───
     if (typeof messageOrOpts === "string") {
@@ -53,8 +71,17 @@ export async function saveCommand(
             message: messageOrOpts,
         };
 
+        console.log();
+        printEntryPreview(entry);
+
+        const saveSpinner = spin("Saving context...");
         const filePath = await writeEntry(entry);
-        console.log(chalk.green(`✅ Quick save → ${filePath}`));
+        saveSpinner.succeed("Saved");
+
+        console.log();
+        const safeBranch = sanitizeBranchName(branch);
+        printSuccess(`Quick save → .relayctx/branches/${safeBranch}/entries/${entryId}.json`);
+        console.log();
         return;
     }
 
@@ -67,9 +94,30 @@ export async function saveCommand(
     const autoTask = taskFromBranch(branch);
     const autoState = await getStateSummary();
 
-    // ─── Smart Save: pre-populate from Git data + previous entry ───
+    // ─── Smart Save: show prior context ───
     if (!isManual && (prevEntry || autoTask || autoState)) {
-        console.log(chalk.cyan("📎 Auto-detected from Git:\n"));
+        printSection("📎 Git Context");
+    }
+
+    if (!isManual && prevEntry) {
+        if (prevEntry.approaches.length > 0) {
+            printDim("Previous approaches:");
+            prevEntry.approaches.forEach((a) =>
+                printDim(`  • ${a}`)
+            );
+        }
+        if (prevEntry.decisions.length > 0) {
+            printDim("Previous decisions:");
+            prevEntry.decisions.forEach((d) =>
+                printDim(`  • ${d}`)
+            );
+        }
+        if (prevEntry.nextSteps.length > 0) {
+            printDim("Previous next steps:");
+            prevEntry.nextSteps.forEach((s) =>
+                printDim(`  • ${s}`)
+            );
+        }
     }
 
     // Build default values
@@ -88,28 +136,8 @@ export async function saveCommand(
         ? 'What is the current state? (e.g., "Login page done, API pending")'
         : "Current state:";
 
-    // Show existing approaches/decisions from previous entry
-    if (!isManual && prevEntry) {
-        if (prevEntry.approaches.length > 0) {
-            console.log(chalk.dim("  Previous approaches:"));
-            prevEntry.approaches.forEach((a) =>
-                console.log(chalk.dim(`    • ${a}`))
-            );
-        }
-        if (prevEntry.decisions.length > 0) {
-            console.log(chalk.dim("  Previous decisions:"));
-            prevEntry.decisions.forEach((d) =>
-                console.log(chalk.dim(`    • ${d}`))
-            );
-        }
-        if (prevEntry.nextSteps.length > 0) {
-            console.log(chalk.dim("  Previous next steps:"));
-            prevEntry.nextSteps.forEach((s) =>
-                console.log(chalk.dim(`    • ${s}`))
-            );
-        }
-        console.log();
-    }
+    printSection("✏️  Your Input");
+    console.log();
 
     const answers = await inquirer.prompt([
         {
@@ -199,11 +227,32 @@ export async function saveCommand(
         nextSteps,
     };
 
+    // ─── Preview ───
+    console.log();
+    printEntryPreview(entry);
+
+    const { confirmSave } = await inquirer.prompt([
+        {
+            type: "confirm",
+            name: "confirmSave",
+            message: "Save this context?",
+            default: true,
+        },
+    ]);
+
+    if (!confirmSave) {
+        console.log();
+        printDim("Save cancelled.");
+        console.log();
+        return;
+    }
+
+    const saveSpinner = spin("Saving context...");
     const filePath = await writeEntry(entry);
+    saveSpinner.succeed("Saved");
+
+    console.log();
     const safeBranch = sanitizeBranchName(branch);
-    console.log(
-        chalk.green(
-            `\n✅ Context saved → .relayctx/branches/${safeBranch}/entries/${entryId}.json`
-        )
-    );
+    printSuccess(`Context saved → .relayctx/branches/${safeBranch}/entries/${entryId}.json`);
+    console.log();
 }

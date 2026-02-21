@@ -13,30 +13,48 @@ import {
     sanitizeBranchName,
     type ContextEntry,
 } from "../utils/storage.js";
+import {
+    printBanner,
+    printSuccess,
+    printSection,
+    printDim,
+    printBox,
+    spin,
+} from "../utils/ui.js";
 
 export async function handoffCommand(user: string): Promise<void> {
+    printBanner();
+
     // Validate environment
-    if (!(await isGitRepo())) {
-        console.log(chalk.red("✖ Not a Git repository."));
+    const spinner = spin("Checking Git repository...");
+    const isRepo = await isGitRepo();
+    if (!isRepo) {
+        spinner.fail(chalk.red("Not a Git repository"));
         process.exit(1);
     }
-    if (!(await isInitialized())) {
-        console.log(
-            chalk.red("✖ RelayContext not initialized. Run `relayctx init` first.")
-        );
+
+    const initialized = await isInitialized();
+    if (!initialized) {
+        spinner.fail(chalk.red("RelayContext not initialized"));
+        printDim('Run `relayctx init` to set up this project.');
         process.exit(1);
     }
+    spinner.succeed("Repository verified");
 
     // Clean the @prefix if present
     const assignedTo = user.replace(/^@/, "");
     if (!assignedTo) {
-        console.log(chalk.red("✖ Please specify a user: relayctx handoff @username"));
+        spinner.fail(chalk.red("No user specified"));
+        printDim("Usage: relayctx handoff @username");
         process.exit(1);
     }
 
     const branch = await getCurrentBranch();
     const commit = await getCurrentCommit();
     const prevEntry = await getLatestEntry(branch);
+
+    printSection(`🤝 Handoff to @${assignedTo}`);
+    console.log();
 
     // Prompt for handoff details
     const answers = await inquirer.prompt([
@@ -81,16 +99,32 @@ export async function handoffCommand(user: string): Promise<void> {
         openIssues,
     };
 
+    const saveSpinner = spin("Saving handoff...");
     const filePath = await writeEntry(entry);
+    saveSpinner.succeed("Handoff saved");
+
+    // Styled handoff card
+    console.log();
+    const cardLines = [
+        `${chalk.bold("Assigned to:")}   ${chalk.magenta(`@${assignedTo}`)}`,
+        `${chalk.bold("Branch:")}        ${chalk.cyan(branch)}`,
+        `${chalk.bold("Summary:")}       ${answers.summary}`,
+    ];
+    if (openIssues.length > 0) {
+        cardLines.push(`${chalk.bold("Open Issues:")}`);
+        openIssues.forEach((issue: string) => {
+            cardLines.push(`  ${chalk.dim("•")} ${issue}`);
+        });
+    }
+
+    printBox(cardLines.join("\n"), "📤 Handoff Card");
+    console.log();
+
     const safeBranch = sanitizeBranchName(branch);
-    console.log(
-        chalk.green(
-            `\n✅ Handoff to @${assignedTo} saved → .relayctx/branches/${safeBranch}/entries/${entryId}.json`
-        )
+    printSuccess(`Handoff → .relayctx/branches/${safeBranch}/entries/${entryId}.json`);
+    console.log();
+    printDim(
+        `@${assignedTo} can run \`relayctx resume\` on branch "${branch}" to continue.`
     );
-    console.log(
-        chalk.dim(
-            `  @${assignedTo} can run \`relayctx resume\` on branch "${branch}" to continue.`
-        )
-    );
+    console.log();
 }

@@ -5,35 +5,53 @@ import {
     getLatestEntries,
 } from "../utils/storage.js";
 import { formatPrompt, mergeEntries } from "../utils/prompt.js";
-import { copyAndNotify } from "../utils/clipboard.js";
+import { copyToClipboard } from "../utils/clipboard.js";
+import {
+    printBanner,
+    printWarning,
+    printBox,
+    printClipboardBadge,
+    printDim,
+    spin,
+} from "../utils/ui.js";
 
 export async function resumeCommand(options: {
     depth?: number;
 }): Promise<void> {
+    printBanner();
+
     // Validate environment
-    if (!(await isGitRepo())) {
-        console.log(chalk.red("✖ Not a Git repository."));
+    const spinner = spin("Checking Git repository...");
+    const isRepo = await isGitRepo();
+    if (!isRepo) {
+        spinner.fail(chalk.red("Not a Git repository"));
         process.exit(1);
     }
-    if (!(await isInitialized())) {
-        console.log(
-            chalk.red("✖ RelayContext not initialized. Run `relayctx init` first.")
-        );
+
+    const initialized = await isInitialized();
+    if (!initialized) {
+        spinner.fail(chalk.red("RelayContext not initialized"));
+        printDim('Run `relayctx init` to set up this project.');
         process.exit(1);
     }
+    spinner.succeed("Repository verified");
 
     const branch = await getCurrentBranch();
     const depth = options.depth || 1;
+
+    const loadSpinner = spin("Loading branch context...");
     const entries = await getLatestEntries(depth, branch);
 
     if (entries.length === 0) {
-        console.log(
-            chalk.yellow(
-                `⚠️  No saved context for branch "${branch}". Run \`relayctx save\` first.`
-            )
+        loadSpinner.warn(chalk.yellow("No saved context found"));
+        console.log();
+        printWarning(
+            `No saved context for branch "${branch}". Run \`relayctx save\` first.`
         );
+        console.log();
         return;
     }
+    loadSpinner.succeed(`Loaded ${entries.length} entry(ies) from "${chalk.cyan(branch)}"`);
 
     // Merge if multiple entries requested
     const entry = depth > 1 ? mergeEntries(entries) : entries[0];
@@ -41,17 +59,17 @@ export async function resumeCommand(options: {
     // Format the continuation prompt
     const prompt = formatPrompt(entry);
 
-    // Display
-    console.log(chalk.cyan("\n─── Continuation Prompt ───\n"));
-    console.log(prompt);
-    console.log(chalk.cyan("\n───────────────────────────\n"));
+    // Display in a styled box
+    console.log();
+    printBox(prompt, "📋 Continuation Prompt");
+    console.log();
 
     // Copy to clipboard
-    await copyAndNotify(prompt);
+    const copied = await copyToClipboard(prompt);
+    printClipboardBadge(copied);
 
-    console.log(
-        chalk.dim(
-            `  Source: ${entries.length} entry(ies) from branch "${branch}"`
-        )
+    printDim(
+        `Source: ${entries.length} entry(ies) from branch "${branch}"`
     );
+    console.log();
 }

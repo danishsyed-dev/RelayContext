@@ -71,6 +71,46 @@ relayctx resume    # → copied to clipboard
 
 ---
 
+## CLI Interface
+
+RelayContext features a polished, branded CLI experience:
+
+```
+╭────────────────────────────────────────────────╮
+│ 🔄 RelayContext  v1.0.0                        │
+│ Git tracks code. RelayContext tracks thinking. │
+╰────────────────────────────────────────────────╯
+
+  Commands:
+
+    Context
+      save [msg]          Save reasoning context
+      resume              Generate AI continuation prompt
+      log                 View context history
+
+    Git Integration
+      diff                Changes since last save
+      share               Stage .relayctx/ for commit
+
+    Team
+      handoff <user>      Hand off work to teammate
+
+    Setup
+      init                Initialize in current repo
+```
+
+### Features
+
+- 🎨 **Branded output** — gradient-colored banner, boxed panels, and styled tables
+- ⏳ **Progress spinners** — elegant `ora` spinners for all async operations
+- 📋 **Save preview** — review your context before saving with a boxed preview panel
+- 📊 **Styled log table** — color-coded entry types with relative timestamps ("2h ago")
+- 📦 **Boxed prompts** — continuation prompts rendered in framed panels
+- 🔇 **Quiet mode** — `-q` flag suppresses all visual chrome for scripting
+- 💡 **Smart suggestions** — unknown commands show "Did you mean?" hints
+
+---
+
 ## Commands
 
 | Command | Description |
@@ -95,50 +135,87 @@ relayctx resume    # → copied to clipboard
 When you run `relayctx save`, it auto-reads Git data and pre-fills a structured form:
 
 ```
-📎 Auto-detected from Git:
+  ✔ Repository verified
+  ✔ Branch: feature/auth  Commit: a1b2c3d
 
-? Task: [Payment refactor]                    ← from branch name
-? Goal: [Improve scalability]                 ← from previous save
-? Current state: [3 files changed]            ← from git log + diff
-? Next steps: [Fix replay, Add idempotency]   ← from previous save
+  📎 Git Context
+  ──────────────────
+    Previous approaches:
+      • CRUD refactor (failed)
+    Previous decisions:
+      • Use event sourcing
 
-✅ Context saved
+  ✏️  Your Input
+  ──────────────────
+
+? Task: Payment refactor
+? Goal: Improve scalability
+? Current state: 3 files changed
+? Next steps: Fix replay, Add idempotency
+
+╭ 📋 Preview ──────────────────────────────────╮
+│ Task:        Payment refactor                │
+│ Goal:        Improve scalability             │
+│ State:       3 files changed                 │
+│ Next Steps:  Fix replay, Add idempotency     │
+╰──────────────────────────────────────────────╯
+
+? Save this context? (Y/n)
+
+╭──────────────────────────────────────────────╮
+│ ✔ Context saved → .relayctx/branches/...     │
+╰──────────────────────────────────────────────╯
 ```
 
 ### Resume
 
-When you run `relayctx resume`, it generates a structured prompt:
+When you run `relayctx resume`, it generates a structured prompt inside a styled box:
 
 ```
-You are continuing work on this repository.
+  ✔ Repository verified
+  ✔ Loaded 1 entry(ies) from "feature/auth"
 
-Task:
-Refactor payment service to use event sourcing
+╭ 📋 Continuation Prompt ─────────────────────╮
+│ You are continuing work on this repository.  │
+│                                              │
+│ Task:                                        │
+│ Refactor payment service                     │
+│                                              │
+│ Goal:                                        │
+│ Improve scalability                          │
+│                                              │
+│ Previous Attempts:                           │
+│ - CRUD refactor (failed — race conditions)   │
+│                                              │
+│ Key Decisions:                               │
+│ - Adopt event sourcing                       │
+│ - Use Kafka for event bus                    │
+│                                              │
+│ Constraints:                                 │
+│ - Do not repeat failed approaches.           │
+│ - Maintain consistency with above decisions. │
+╰──────────────────────────────────────────────╯
 
-Goal:
-Improve scalability and handle concurrent mutations
-
-Previous Attempts:
-- CRUD refactor (failed — race conditions)
-- Hybrid model (partial)
-
-Key Decisions:
-- Adopt event sourcing
-- Use Kafka for event bus
-
-Current State:
-Replay logic partially implemented
-
-Next Steps:
-- Fix replay logic
-- Add idempotency keys
-
-Constraints:
-- Do not repeat failed approaches.
-- Maintain consistency with above decisions.
+  ✔ Copied to clipboard!
 ```
 
 Paste this into **any** AI tool. It works with ChatGPT, Cursor, Claude, Copilot, Windsurf — anything that accepts text.
+
+### Log
+
+View context history with a styled table:
+
+```
+  ✔ Found 3 entries on "main"
+
+┌──────────────────────┬──────────────┬──────────┬──────────────────────────┐
+│ ID                   │ When         │ Type     │ Task / Message           │
+├──────────────────────┼──────────────┼──────────┼──────────────────────────┤
+│ 20260215T102300Z     │ 2h ago       │ full     │ Payment refactor         │
+│ 20260215T090000Z     │ 5h ago       │ quick    │ Fixed auth bug           │
+│ 20260214T180000Z     │ yesterday    │ handoff  │ Handed off to @alice     │
+└──────────────────────┴──────────────┴──────────┴──────────────────────────┘
+```
 
 ---
 
@@ -174,6 +251,7 @@ your-project/
 - ⚡ **Fast** — all commands < 200ms
 - 🌿 **Git-native** — context follows branches
 - 📋 **Zero friction** — smart defaults mean fewer keystrokes
+- 🎨 **Beautiful CLI** — polished output with spinners, boxes, tables, and color
 
 ---
 
@@ -186,7 +264,9 @@ your-project/
 | Interactive Prompts | Inquirer |
 | Git Operations | simple-git |
 | Clipboard | clipboardy (with fallback) |
-| Styling | chalk |
+| Terminal Styling | chalk, boxen, gradient-string |
+| Spinners | ora |
+| Tables | cli-table3 |
 | Bundler | tsup |
 
 ---

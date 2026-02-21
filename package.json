@@ -27,11 +27,16 @@
   "author": "Syed Danish Ali",
   "license": "MIT",
   "dependencies": {
+    "boxen": "^8.0.1",
     "chalk": "^5.3.0",
+    "cli-table3": "^0.6.5",
     "clipboardy": "^4.0.0",
     "commander": "^12.1.0",
+    "figures": "^6.1.0",
     "fs-extra": "^11.2.0",
+    "gradient-string": "^3.0.0",
     "inquirer": "^9.3.0",
+    "ora": "^9.3.0",
     "simple-git": "^3.27.0"
   },
   "devDependencies": {

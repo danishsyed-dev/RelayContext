@@ -6,6 +6,22 @@
   "bin": {
     "relayctx": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danishsyed-dev/RelayContext.git"
+  },
+  "homepage": "https://github.com/danishsyed-dev/RelayContext#readme",
+  "bugs": {
+    "url": "https://github.com/danishsyed-dev/RelayContext/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

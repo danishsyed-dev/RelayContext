@@ -1,6 +1,6 @@
 {
   "name": "relayctx",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Persist and restore structured AI coding context across sessions, IDEs, devices, and team members.",
   "type": "module",
   "bin": {

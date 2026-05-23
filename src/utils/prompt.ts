@@ -104,7 +104,7 @@ export function mergeEntries(entries: ContextEntry[]): ContextEntry {
     const allDecisions = new Set<string>();
     const allMessages: string[] = [];
 
-    for (const entry of entries.reverse()) {
+    for (const entry of [...entries].reverse()) {
         // oldest first for chronological order
         entry.approaches?.forEach((a) => allApproaches.add(a));
         entry.decisions?.forEach((d) => allDecisions.add(d));

@@ -1,14 +1,12 @@
 import chalk from "chalk";
 import inquirer from "inquirer";
 import {
-    isGitRepo,
     getCurrentBranch,
     getCurrentCommit,
     getStateSummary,
     taskFromBranch,
 } from "../utils/git.js";
 import {
-    isInitialized,
     getLatestEntry,
     writeEntry,
     generateEntryId,
@@ -22,8 +20,7 @@ import {
     printDim,
     printEntryPreview,
     spin,
-    validateGitRepo,
-    validateInitialized,
+    ensureRepoReady,
 } from "../utils/ui.js";
 
 export async function saveCommand(
@@ -32,20 +29,7 @@ export async function saveCommand(
     printBanner();
 
     // Validate environment
-    const repoSpinner = spin("Checking Git repository...");
-    const isRepo = await isGitRepo();
-    if (!isRepo) {
-        repoSpinner.fail(chalk.red("Not a Git repository"));
-        process.exit(1);
-    }
-
-    const initialized = await isInitialized();
-    if (!initialized) {
-        repoSpinner.fail(chalk.red("RelayContext not initialized"));
-        printDim('Run `relayctx init` to set up this project.');
-        process.exit(1);
-    }
-    repoSpinner.succeed("Repository verified");
+    await ensureRepoReady();
 
     const branchSpinner = spin("Reading branch context...");
     const branch = await getCurrentBranch();
@@ -75,7 +59,7 @@ export async function saveCommand(
         printEntryPreview(entry);
 
         const saveSpinner = spin("Saving context...");
-        const filePath = await writeEntry(entry);
+        await writeEntry(entry);
         saveSpinner.succeed("Saved");
 
         console.log();
@@ -248,7 +232,7 @@ export async function saveCommand(
     }
 
     const saveSpinner = spin("Saving context...");
-    const filePath = await writeEntry(entry);
+    await writeEntry(entry);
     saveSpinner.succeed("Saved");
 
     console.log();

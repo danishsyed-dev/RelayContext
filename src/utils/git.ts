@@ -1,13 +1,8 @@
 import simpleGit, { SimpleGit } from "simple-git";
 import path from "path";
 
-let gitInstance: SimpleGit | null = null;
-
-function getGit(cwd?: string): SimpleGit {
-    if (!gitInstance) {
-        gitInstance = simpleGit(cwd || process.cwd());
-    }
-    return gitInstance;
+function getGit(): SimpleGit {
+    return simpleGit(process.cwd());
 }
 
 /**

@@ -1,7 +1,6 @@
 import chalk from "chalk";
-import { isGitRepo, getCurrentBranch } from "../utils/git.js";
+import { getCurrentBranch } from "../utils/git.js";
 import {
-    isInitialized,
     getLatestEntries,
 } from "../utils/storage.js";
 import { formatPrompt, mergeEntries } from "../utils/prompt.js";
@@ -13,6 +12,7 @@ import {
     printClipboardBadge,
     printDim,
     spin,
+    ensureRepoReady,
 } from "../utils/ui.js";
 
 export async function resumeCommand(options: {
@@ -21,20 +21,7 @@ export async function resumeCommand(options: {
     printBanner();
 
     // Validate environment
-    const spinner = spin("Checking Git repository...");
-    const isRepo = await isGitRepo();
-    if (!isRepo) {
-        spinner.fail(chalk.red("Not a Git repository"));
-        process.exit(1);
-    }
-
-    const initialized = await isInitialized();
-    if (!initialized) {
-        spinner.fail(chalk.red("RelayContext not initialized"));
-        printDim('Run `relayctx init` to set up this project.');
-        process.exit(1);
-    }
-    spinner.succeed("Repository verified");
+    await ensureRepoReady();
 
     const branch = await getCurrentBranch();
     const depth = options.depth || 1;

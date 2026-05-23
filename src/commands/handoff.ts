@@ -1,12 +1,10 @@
 import chalk from "chalk";
 import inquirer from "inquirer";
 import {
-    isGitRepo,
     getCurrentBranch,
     getCurrentCommit,
 } from "../utils/git.js";
 import {
-    isInitialized,
     getLatestEntry,
     writeEntry,
     generateEntryId,
@@ -20,31 +18,20 @@ import {
     printDim,
     printBox,
     spin,
+    ensureRepoReady,
 } from "../utils/ui.js";
 
 export async function handoffCommand(user: string): Promise<void> {
     printBanner();
 
     // Validate environment
-    const spinner = spin("Checking Git repository...");
-    const isRepo = await isGitRepo();
-    if (!isRepo) {
-        spinner.fail(chalk.red("Not a Git repository"));
-        process.exit(1);
-    }
-
-    const initialized = await isInitialized();
-    if (!initialized) {
-        spinner.fail(chalk.red("RelayContext not initialized"));
-        printDim('Run `relayctx init` to set up this project.');
-        process.exit(1);
-    }
-    spinner.succeed("Repository verified");
+    await ensureRepoReady();
 
     // Clean the @prefix if present
     const assignedTo = user.replace(/^@/, "");
     if (!assignedTo) {
-        spinner.fail(chalk.red("No user specified"));
+        const userSpinner = spin("Validating user...");
+        userSpinner.fail(chalk.red("No user specified"));
         printDim("Usage: relayctx handoff @username");
         process.exit(1);
     }
@@ -100,7 +87,7 @@ export async function handoffCommand(user: string): Promise<void> {
     };
 
     const saveSpinner = spin("Saving handoff...");
-    const filePath = await writeEntry(entry);
+    await writeEntry(entry);
     saveSpinner.succeed("Handoff saved");
 
     // Styled handoff card

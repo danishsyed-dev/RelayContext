@@ -3,6 +3,8 @@ import boxen from "boxen";
 import ora, { type Ora } from "ora";
 import gradient from "gradient-string";
 import figures from "figures";
+import { isGitRepo } from "./git.js";
+import { isInitialized } from "./storage.js";
 
 // ─── Quiet Mode ───
 let quietMode = false;
@@ -18,7 +20,8 @@ export function isQuiet(): boolean {
 // ─── Branding ───
 
 const BRAND_GRADIENT = gradient(["#4facfe", "#00f2fe"]);
-const VERSION = "1.0.0";
+declare const PKG_VERSION: string;
+export const VERSION = typeof PKG_VERSION !== 'undefined' ? PKG_VERSION : '0.0.0';
 
 const TAGLINE = "Git tracks code. RelayContext tracks thinking.";
 
@@ -272,6 +275,27 @@ export function validateInitialized(initialized: boolean): boolean {
         process.exit(1);
     }
     return true;
+}
+
+/**
+ * Shared spinner-based validation for commands that need a Git repo + initialization.
+ * Exits with code 1 on failure.
+ */
+export async function ensureRepoReady(): Promise<void> {
+    const repoSpinner = spin("Checking Git repository...");
+    const isRepo = await isGitRepo();
+    if (!isRepo) {
+        repoSpinner.fail(chalk.red("Not a Git repository"));
+        printDim('Run `git init` first to create a repository.');
+        process.exit(1);
+    }
+    const initialized = await isInitialized();
+    if (!initialized) {
+        repoSpinner.fail(chalk.red("RelayContext not initialized"));
+        printDim('Run `relayctx init` to set up this project.');
+        process.exit(1);
+    }
+    repoSpinner.succeed("Repository verified");
 }
 
 // ─── Entry Preview ───

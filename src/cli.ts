@@ -6,7 +6,7 @@ import { logCommand } from "./commands/log.js";
 import { diffCommand } from "./commands/diff.js";
 import { handoffCommand } from "./commands/handoff.js";
 import { shareCommand } from "./commands/share.js";
-import { setQuietMode, printCustomHelp, printCustomVersion } from "./utils/ui.js";
+import { setQuietMode, printCustomHelp, printCustomVersion, VERSION } from "./utils/ui.js";
 import chalk from "chalk";
 
 const program = new Command();
@@ -16,7 +16,7 @@ program
     .description(
         "Persist and restore structured AI coding context across sessions, IDEs, devices, and team members."
     )
-    .version("1.0.0", "-v, --version")
+    .version(VERSION, "-v, --version")
     .option("-q, --quiet", "Suppress visual chrome (banners, boxes, spinners)")
     .helpOption("-h, --help", "Show help")
     .addHelpCommand(false);
